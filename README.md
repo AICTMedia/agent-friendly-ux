@@ -1,9 +1,10 @@
 #Agent-Friendly UX — Replit Agent Skill
 ----------------------------------------
 
-A Replit Agent skill that ensures websites are optimized for AI agent navigation and interaction. Based on Google's Build agent-friendly websites guide.
+A Replit Agent skill that ensures websites are optimized for AI agent navigation and interaction. Based on Google's <a href="https://web.dev/articles/ai-agent-site-ux">Build agent-friendly websites</a> guide.
 
-Author: Julia Logan, Head of SEO at AICT Media
+Author: Julia Logan, Head of SEO at <a href="https://aictmedia.com">AICT Media</a>
+
 
 What It Does
 
