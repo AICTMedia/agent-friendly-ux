@@ -1,1 +1,105 @@
+name: Validate Skill
 
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check SKILL.md exists
+        run: |
+          if [ ! -f "SKILL.md" ]; then
+            echo "::error::SKILL.md not found in repository root"
+            exit 1
+          fi
+          echo "SKILL.md found"
+
+      - name: Validate frontmatter
+        run: |
+          if ! head -1 SKILL.md | grep -q "^---$"; then
+            echo "::error::SKILL.md must start with YAML frontmatter (---)"
+            exit 1
+          fi
+
+          FRONTMATTER=$(sed -n '/^---$/,/^---$/p' SKILL.md | sed '1d;$d')
+
+          if [ -z "$FRONTMATTER" ]; then
+            echo "::error::SKILL.md has empty or missing frontmatter"
+            exit 1
+          fi
+
+          echo "$FRONTMATTER"
+          echo "Frontmatter block found"
+
+      - name: Validate name field
+        run: |
+          NAME=$(sed -n '/^---$/,/^---$/p' SKILL.md | grep '^name:' | sed 's/^name: *//')
+
+          if [ -z "$NAME" ]; then
+            echo "::error::Frontmatter is missing required 'name' field"
+            exit 1
+          fi
+
+          if [ ${#NAME} -gt 64 ]; then
+            echo "::error::Skill name exceeds 64 characters (currently ${#NAME})"
+            exit 1
+          fi
+
+          if ! echo "$NAME" | grep -qE '^[a-z0-9-]+$'; then
+            echo "::error::Skill name must contain only lowercase letters, numbers, and hyphens. Got: $NAME"
+            exit 1
+          fi
+
+          echo "Name is valid: $NAME"
+
+      - name: Validate description field
+        run: |
+          DESCRIPTION=$(sed -n '/^---$/,/^---$/p' SKILL.md | grep '^description:' | sed 's/^description: *//')
+
+          if [ -z "$DESCRIPTION" ]; then
+            echo "::error::Frontmatter is missing required 'description' field"
+            exit 1
+          fi
+
+          if [ ${#DESCRIPTION} -gt 1024 ]; then
+            echo "::error::Description exceeds 1024 characters (currently ${#DESCRIPTION})"
+            exit 1
+          fi
+
+          echo "Description is valid (${#DESCRIPTION} chars)"
+
+      - name: Check line count
+        run: |
+          LINES=$(wc -l < SKILL.md)
+          echo "SKILL.md has $LINES lines"
+
+          if [ "$LINES" -gt 500 ]; then
+            echo "::warning::SKILL.md exceeds the recommended 500 lines ($LINES lines). Consider splitting into separate reference files."
+          fi
+
+      - name: Check README exists
+        run: |
+          if [ ! -f "README.md" ]; then
+            echo "::warning::No README.md found. A README is recommended for GitHub repositories."
+          else
+            echo "README.md found"
+          fi
+
+      - name: Lint markdown
+        uses: DavidAnson/markdownlint-cli2-action@v19
+        with:
+          globs: "*.md"
+          config: |
+            {
+              "default": true,
+              "MD013": false,
+              "MD033": false,
+              "MD024": false,
+              "MD040": false
+            }
